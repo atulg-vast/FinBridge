@@ -1,0 +1,56 @@
+# ── Environment & Secrets ──────────────────────────────────
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# ── Python ─────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+pip-wheel-metadata/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# ── Node / Frontend ────────────────────────────────────────
+node_modules/
+dist/
+.cache/
+*.tsbuildinfo
+
+# ── Uploads (user files — never commit) ───────────────────
+backend/uploads/
+
+# ── Database ───────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── IDE ────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Logs ───────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Alembic ────────────────────────────────────────────────
+# Keep migrations but ignore pyc inside
+alembic/versions/__pycache__/
