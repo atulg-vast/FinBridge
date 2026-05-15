@@ -264,9 +264,6 @@ def _map_to_transactions(
                 transaction_date=_safe_date(extracted.get("month_year")),
                 description=f"Salary - {emp.get('department', '')} - {extracted.get('month_year', '')}",
                 extracted_data=emp,
-                raw_ai_output=raw_output,
-                confidence_score=confidence,
-                low_confidence_fields=low_conf,
             )
             transactions.append(t)
 
@@ -282,9 +279,6 @@ def _map_to_transactions(
                 transaction_date=_safe_date(txn.get("date")),
                 description=f"{'DR' if debit else 'CR'} - {txn.get('narration', '')}",
                 extracted_data={**txn, "type": "debit" if debit else "credit"},
-                raw_ai_output=raw_output,
-                confidence_score=confidence,
-                low_confidence_fields=low_conf,
             )
             transactions.append(t)
 
@@ -299,9 +293,6 @@ def _map_to_transactions(
                 transaction_date=_safe_date(entry.get("date")),
                 description=entry.get("narration", ""),
                 extracted_data={**entry, "type": "debit" if debit else "credit"},
-                raw_ai_output=raw_output,
-                confidence_score=confidence,
-                low_confidence_fields=low_conf,
             )
             transactions.append(t)
 

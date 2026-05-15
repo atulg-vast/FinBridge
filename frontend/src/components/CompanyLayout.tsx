@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/authStore'
 const nav = [
   { to: '/company', label: 'Dashboard', end: true },
   { to: '/company/upload', label: 'Upload Documents' },
+  { to: '/company/reports', label: 'Reports' },
 ]
 
 export default function CompanyLayout() {

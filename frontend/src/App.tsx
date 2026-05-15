@@ -14,7 +14,11 @@ import CompanyLayout from '@/components/CompanyLayout'
 import CompanyDashboard from '@/pages/company/CompanyDashboard'
 import UploadPage from '@/pages/company/UploadPage'
 import DocumentDetailPage from '@/pages/company/DocumentDetailPage'
+import AccountantLayout from '@/components/AccountantLayout'
 import AccountantDashboard from '@/pages/accountant/AccountantDashboard'
+import ReviewPage from '@/pages/accountant/ReviewPage'
+import AccountantReportsPage from '@/pages/accountant/ReportsPage'
+import CompanyReportsPage from '@/pages/company/ReportsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -55,13 +59,18 @@ export default function App() {
             <Route index element={<CompanyDashboard />} />
             <Route path="upload" element={<UploadPage />} />
             <Route path="documents/:docId" element={<DocumentDetailPage />} />
+            <Route path="reports" element={<CompanyReportsPage />} />
           </Route>
 
-          <Route path="/accountant/*" element={
-            <ProtectedRoute allowedRoles={['accountant']}>
-              <AccountantDashboard />
+          <Route path="/accountant" element={
+            <ProtectedRoute allowedRoles={['accountant', 'firm_admin']}>
+              <AccountantLayout />
             </ProtectedRoute>
-          } />
+          }>
+            <Route index element={<AccountantDashboard />} />
+            <Route path="review" element={<ReviewPage />} />
+            <Route path="reports" element={<AccountantReportsPage />} />
+          </Route>
 
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />

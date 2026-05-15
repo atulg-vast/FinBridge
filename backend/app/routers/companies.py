@@ -31,7 +31,7 @@ def list_companies(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    if current_user.role == UserRole.firm_admin:
+    if current_user.role in (UserRole.firm_admin, UserRole.accountant):
         if str(current_user.firm_id) != firm_id:
             raise HTTPException(status_code=403, detail="Access denied")
     elif current_user.role != UserRole.platform_admin:
