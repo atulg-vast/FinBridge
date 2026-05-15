@@ -7,7 +7,10 @@ from app.deps import get_current_user, require_role
 from app.models.user import User, UserRole
 from app.models.transaction import Transaction, TransactionStatus
 from app.models.company import Company
+from app.models.document import Document
 from app.schemas.transaction import TransactionResponse, TransactionUpdate, ReviewAction
+from app.services.notification_service import notify_company_users, notify_firm_accountants
+from app.services.audit_service import log_action
 
 router = APIRouter()
 
@@ -102,6 +105,17 @@ def accept_transaction(
     txn.status = TransactionStatus.accepted
     txn.reviewed_by = current_user.id
     txn.reviewed_at = datetime.now(timezone.utc)
+
+    notify_company_users(
+        db, txn.company_id,
+        f"Transaction '{txn.description or txn.party_name}' was accepted by your accountant.",
+        type="transaction_accepted",
+        entity_id=txn.id,
+        entity_type="transaction",
+    )
+    log_action(db, current_user.id, "transaction_accepted", "transaction",
+               entity_id=txn.id, company_id=txn.company_id,
+               meta={"party_name": txn.party_name, "amount": str(txn.amount)})
     db.commit()
     db.refresh(txn)
     return txn
@@ -126,6 +140,17 @@ def reject_transaction(
     txn.rejection_note = payload.rejection_note
     txn.reviewed_by = current_user.id
     txn.reviewed_at = datetime.now(timezone.utc)
+
+    notify_company_users(
+        db, txn.company_id,
+        f"Transaction '{txn.description or txn.party_name}' was rejected: {payload.rejection_note}",
+        type="transaction_rejected",
+        entity_id=txn.id,
+        entity_type="transaction",
+    )
+    log_action(db, current_user.id, "transaction_rejected", "transaction",
+               entity_id=txn.id, company_id=txn.company_id,
+               meta={"party_name": txn.party_name, "rejection_note": payload.rejection_note})
     db.commit()
     db.refresh(txn)
     return txn

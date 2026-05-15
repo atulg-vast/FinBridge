@@ -16,6 +16,6 @@ class Notification(Base):
     entity_id = Column(UUID(as_uuid=True), nullable=True)
     entity_type = Column(String(50), nullable=True)
     is_read = Column(Boolean, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
 
     user = relationship("User", back_populates="notifications")

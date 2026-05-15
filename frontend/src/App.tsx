@@ -19,6 +19,7 @@ import AccountantDashboard from '@/pages/accountant/AccountantDashboard'
 import ReviewPage from '@/pages/accountant/ReviewPage'
 import AccountantReportsPage from '@/pages/accountant/ReportsPage'
 import CompanyReportsPage from '@/pages/company/ReportsPage'
+import AuditPage from '@/pages/firm-admin/AuditPage'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -49,6 +50,7 @@ export default function App() {
             <Route path="companies" element={<CompaniesPage />} />
             <Route path="companies/:companyId/payment-heads" element={<PaymentHeadsPage />} />
             <Route path="accountants" element={<AccountantsPage />} />
+            <Route path="audit" element={<AuditPage />} />
           </Route>
 
           <Route path="/company" element={

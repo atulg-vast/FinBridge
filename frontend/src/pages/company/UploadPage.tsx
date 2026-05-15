@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
-import { documentsApi } from '@/api/documents'
+import { documentsApi, type Document } from '@/api/documents'
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -38,8 +38,8 @@ export default function UploadPage() {
     queryFn: () => documentsApi.list(companyId),
     enabled: !!companyId,
     refetchInterval: (query) => {
-      const docs = query.state.data as typeof documents | undefined
-      const hasProcessing = docs?.some((d) => d.status === 'pending' || d.status === 'processing')
+      const docs = query.state.data as Document[] | undefined
+      const hasProcessing = docs?.some((d: Document) => d.status === 'pending' || d.status === 'processing')
       return hasProcessing ? 3000 : false
     },
   })
@@ -69,6 +69,17 @@ export default function UploadPage() {
       }
     },
     [selectedType, companyId, qc]
+  )
+
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+
+  const handleCameraFile = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      if (file) onDrop([file])
+      e.target.value = ''
+    },
+    [onDrop]
   )
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -150,6 +161,32 @@ export default function UploadPage() {
             )}
           </div>
 
+          {/* Camera capture for mobile */}
+          {!uploading && selectedType && (
+            <div className="mt-3 flex justify-center">
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleCameraFile}
+              />
+              <button
+                type="button"
+                onClick={() => cameraInputRef.current?.click()}
+                className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Take Photo
+              </button>
+            </div>
+          )}
+
           {uploadError && (
             <div className="mt-3 text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{uploadError}</div>
           )}
@@ -179,7 +216,7 @@ export default function UploadPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {documents.map((doc) => (
+                {documents.map((doc: Document) => (
                   <tr key={doc.id} className="hover:bg-gray-50">
                     <td className="px-5 py-3 font-medium text-gray-900 max-w-xs truncate">
                     <Link to={`/company/documents/${doc.id}`} className="hover:text-indigo-600 hover:underline">

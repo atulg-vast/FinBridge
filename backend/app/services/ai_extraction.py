@@ -19,6 +19,7 @@ from app.database import SessionLocal
 from app.models.document import Document, DocumentStatus
 from app.models.document_type import DocumentType
 from app.models.transaction import Transaction, TransactionLineItem, TransactionStatus
+from app.services.notification_service import notify_firm_accountants, notify_company_users
 
 _client = None
 
@@ -362,6 +363,19 @@ async def extract_document(document_id: uuid.UUID):
             db.add(t)
 
         doc.status = DocumentStatus.extracted
+
+        # Notify accountants in the firm that a new document is ready for review
+        from app.models.company import Company
+        company = db.query(Company).filter(Company.id == doc.company_id).first()
+        if company:
+            notify_firm_accountants(
+                db, company.firm_id,
+                f"Document '{doc.original_filename}' from {company.name} is ready for review ({len(transactions)} transaction(s) extracted).",
+                type="document_extracted",
+                entity_id=doc.id,
+                entity_type="document",
+            )
+
         db.commit()
 
     except Exception as e:

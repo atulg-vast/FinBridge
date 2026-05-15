@@ -8,6 +8,7 @@ from jose import JWTError, jwt
 from app.database import get_db
 from app.deps import get_current_user, require_role
 from app.config import settings
+from app.services.audit_service import log_action
 from app.models.user import User, UserRole
 from app.models.report import Report
 from app.models.company import Company
@@ -81,6 +82,9 @@ async def upload_report(
         original_filename=file.filename or stored_name,
     )
     db.add(report)
+    log_action(db, current_user.id, "report_uploaded", "report",
+               company_id=company_id,
+               meta={"title": title.strip(), "filename": file.filename})
     db.commit()
     db.refresh(report)
     return report

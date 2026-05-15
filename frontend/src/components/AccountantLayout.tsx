@@ -1,5 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
+import { useNotifications } from '@/hooks/useNotifications'
+import NotificationBell from '@/components/NotificationBell'
 
 const nav = [
   { to: '/accountant', label: 'Dashboard', end: true },
@@ -10,6 +12,7 @@ const nav = [
 export default function AccountantLayout() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
+  useNotifications()
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -46,8 +49,13 @@ export default function AccountantLayout() {
           </button>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto">
-        <Outlet />
+      <main className="flex-1 overflow-auto flex flex-col">
+        <header className="flex items-center justify-end px-6 py-3 border-b border-gray-100 bg-white">
+          <NotificationBell />
+        </header>
+        <div className="flex-1 overflow-auto">
+          <Outlet />
+        </div>
       </main>
     </div>
   )

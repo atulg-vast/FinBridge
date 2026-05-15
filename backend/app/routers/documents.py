@@ -10,6 +10,7 @@ from app.models.document import Document, DocumentStatus
 from app.models.document_type import DocumentType
 from app.schemas.document import DocumentResponse, DocumentTypeResponse
 from app.config import settings
+from app.services.audit_service import log_action
 
 router = APIRouter()
 
@@ -79,6 +80,9 @@ async def upload_document(
         status=DocumentStatus.pending,
     )
     db.add(doc)
+    log_action(db, current_user.id, "document_uploaded", "document",
+               company_id=company_id,
+               meta={"filename": file.filename, "document_type": document_type_slug})
     db.commit()
     db.refresh(doc)
 
