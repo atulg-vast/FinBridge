@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { companyUsersApi, type CompanyUser, type CompanyUserCreateResponse } from '@/api/companies'
+import { useSetPageHeader } from '@/hooks/useSetPageHeader'
+import { PageActions } from '@/components/PageActions'
 
 function timeStr(iso: string) {
   return new Date(iso).toLocaleString('en-IN', {
@@ -135,20 +137,18 @@ export default function TeamPage() {
     onSuccess: () => { invalidate(); setDeletingId(null) },
   })
 
+  useSetPageHeader('Team', 'Manage users who can access your company portal')
+
   return (
     <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Team</h1>
-          <p className="text-gray-500 text-sm mt-1">Manage users who can access your company portal</p>
-        </div>
+      <PageActions>
         <button
           onClick={() => { setShowForm(true); setFormError('') }}
           className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition"
         >
           + Add User
         </button>
-      </div>
+      </PageActions>
 
       {/* Add user form */}
       {showForm && (

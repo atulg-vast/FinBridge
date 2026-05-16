@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/authStore'
 import { accountantsApi } from '@/api/companies'
+import { useSetPageHeader } from '@/hooks/useSetPageHeader'
+import { PageActions } from '@/components/PageActions'
 import type { AccountantCreatePayload, AccountantCreateResponse } from '@/api/companies'
 
 export default function AccountantsPage() {
@@ -39,20 +41,18 @@ export default function AccountantsPage() {
     createMutation.mutate(form)
   }
 
+  useSetPageHeader('Accountants', `${accountants.length} accountant${accountants.length !== 1 ? 's' : ''}`)
+
   return (
     <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Accountants</h1>
-          <p className="text-gray-500 text-sm mt-1">{accountants.length} accountant{accountants.length !== 1 ? 's' : ''}</p>
-        </div>
+      <PageActions>
         <button
           onClick={() => { setShowModal(true); setError(''); setCreatedCredentials(null) }}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
         >
           + Add Accountant
         </button>
-      </div>
+      </PageActions>
 
       {createdCredentials && (
         <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-5">

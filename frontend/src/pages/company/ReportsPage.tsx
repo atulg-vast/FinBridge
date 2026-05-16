@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { reportsApi } from '@/api/reports'
+import { useSetPageHeader } from '@/hooks/useSetPageHeader'
 
 function FileIcon({ filename }: { filename: string }) {
   const ext = filename.split('.').pop()?.toLowerCase()
@@ -15,10 +16,10 @@ export default function ReportsPage() {
     queryFn: () => reportsApi.list(),
   })
 
+  useSetPageHeader('Reports', 'MIS reports shared by your accounting firm')
+
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">Reports</h1>
-      <p className="text-gray-500 text-sm mb-8">MIS reports shared by your accounting firm</p>
 
       {isLoading ? (
         <div className="text-gray-400 text-sm">Loading...</div>

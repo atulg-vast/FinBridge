@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useSetPageHeader } from '@/hooks/useSetPageHeader'
 import { useAuthStore } from '@/stores/authStore'
 import { auditApi, type AuditFilters } from '@/api/audit'
 import { companiesApi } from '@/api/companies'
@@ -82,10 +83,10 @@ export default function AuditPage() {
     setFilters((f) => ({ ...f, [key]: value || undefined }))
   }
 
+  useSetPageHeader('Audit Trail', 'Full activity log across your companies')
+
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">Audit Trail</h1>
-      <p className="text-gray-500 text-sm mb-6">Full activity log across your companies</p>
 
       {/* Filters */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 flex flex-wrap gap-3">

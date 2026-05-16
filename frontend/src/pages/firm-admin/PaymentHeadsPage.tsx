@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useSetPageHeader } from '@/hooks/useSetPageHeader'
 import { paymentHeadsApi } from '@/api/paymentHeads'
 import type { PaymentHead } from '@/api/paymentHeads'
 
@@ -67,15 +68,10 @@ export default function PaymentHeadsPage() {
     if (newSubName.trim()) addSubMutation.mutate(newSubName.trim())
   }
 
+  useSetPageHeader('Payment Heads', 'Configure expense categories for this company', true)
+
   return (
     <div className="p-8">
-      <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate(-1)} className="text-gray-400 hover:text-gray-600 text-sm">← Back</button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Payment Heads</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Configure expense categories for this company</p>
-        </div>
-      </div>
 
       {presetMsg && (
         <div className="mb-5 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-800 flex justify-between items-center">

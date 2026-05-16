@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { firmsApi } from '@/api/firms'
+import { useSetPageHeader } from '@/hooks/useSetPageHeader'
+import { PageActions } from '@/components/PageActions'
 import type { FirmCreatePayload, FirmCreateResponse } from '@/api/firms'
 
 export default function FirmsPage() {
@@ -35,21 +37,18 @@ export default function FirmsPage() {
     createMutation.mutate(form)
   }
 
+  useSetPageHeader('Accounting Firms', `${firms.length} firm${firms.length !== 1 ? 's' : ''} registered`)
+
   return (
     <div className="p-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Accounting Firms</h1>
-          <p className="text-gray-500 text-sm mt-1">{firms.length} firm{firms.length !== 1 ? 's' : ''} registered</p>
-        </div>
+      <PageActions>
         <button
           onClick={() => { setShowModal(true); setError(''); setCreatedCredentials(null) }}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
         >
           + Add Firm
         </button>
-      </div>
+      </PageActions>
 
       {/* Credentials banner after creation */}
       {createdCredentials && (

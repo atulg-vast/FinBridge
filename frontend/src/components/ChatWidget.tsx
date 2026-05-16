@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { chatApi, type QueryCard, type QueryResult } from '@/api/chat'
@@ -73,7 +73,6 @@ function ResultView({ result, onReset }: { result: QueryResult; onReset: () => v
         </button>
       </div>
 
-      {/* Claude summary */}
       <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-4">
         <div className="flex gap-2 items-start">
           <span className="text-base shrink-0 mt-0.5">✨</span>
@@ -81,7 +80,6 @@ function ResultView({ result, onReset }: { result: QueryResult; onReset: () => v
         </div>
       </div>
 
-      {/* Results table */}
       {result.rows.length > 0 ? (
         <div className="rounded-xl border border-gray-100 overflow-auto max-h-80">
           <table className="w-full text-xs">
@@ -130,6 +128,51 @@ export default function ChatWidget() {
   const [open, setOpen] = useState(false)
   const [result, setResult] = useState<QueryResult | null>(null)
 
+  // Draggable position — starts bottom-right
+  const [pos, setPos] = useState(() => ({
+    x: window.innerWidth - 140,
+    y: window.innerHeight - 76,
+  }))
+  const [dragging, setDragging] = useState(false)
+  const dragRef = useRef({ startMouseX: 0, startMouseY: 0, startPosX: 0, startPosY: 0, moved: false })
+
+  function onMouseDown(e: React.MouseEvent) {
+    e.preventDefault()
+    dragRef.current = {
+      startMouseX: e.clientX,
+      startMouseY: e.clientY,
+      startPosX: pos.x,
+      startPosY: pos.y,
+      moved: false,
+    }
+    setDragging(true)
+
+    function onMove(ev: MouseEvent) {
+      const dx = ev.clientX - dragRef.current.startMouseX
+      const dy = ev.clientY - dragRef.current.startMouseY
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) dragRef.current.moved = true
+      setPos({
+        x: Math.max(8, Math.min(window.innerWidth - 130, dragRef.current.startPosX + dx)),
+        y: Math.max(8, Math.min(window.innerHeight - 52, dragRef.current.startPosY + dy)),
+      })
+    }
+
+    function onUp() {
+      setDragging(false)
+      if (!dragRef.current.moved) setOpen(true)
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+    }
+
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }
+
+  function handleClose() {
+    setOpen(false)
+    setResult(null)
+  }
+
   const { data: queries = [] } = useQuery({
     queryKey: ['chat-queries'],
     queryFn: chatApi.queries,
@@ -142,30 +185,38 @@ export default function ChatWidget() {
     onSuccess: (data) => setResult(data),
   })
 
-  function handleClose() {
-    setOpen(false)
-    setResult(null)
-  }
-
   const widget = (
     <>
+      {/* Floating trigger button — draggable */}
       {!open && (
         <button
-          onClick={() => setOpen(true)}
-          style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999 }}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-3 rounded-full shadow-lg hover:bg-indigo-700 transition-all"
+          onMouseDown={onMouseDown}
+          style={{
+            position: 'fixed',
+            left: pos.x,
+            top: pos.y,
+            zIndex: 9999,
+            cursor: dragging ? 'grabbing' : 'grab',
+            userSelect: 'none',
+          }}
+          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-full shadow-lg hover:bg-indigo-700 transition-colors select-none"
+          title="Drag to reposition · Click to open AI Insights"
         >
-          <span style={{ fontSize: '16px' }}>✨</span>
+          <span style={{ fontSize: '14px', lineHeight: 1 }}>✨</span>
           <span className="text-sm font-semibold">Ask AI</span>
+          {/* subtle drag indicator */}
+          <svg className="w-3 h-3 opacity-50 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+          </svg>
         </button>
       )}
 
+      {/* Slide-in panel */}
       {open && (
         <div
           style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: '420px', zIndex: 9999 }}
           className="bg-white border-l border-gray-200 shadow-2xl flex flex-col"
         >
-          {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 bg-indigo-600 shrink-0">
             <div className="flex items-center gap-2 text-white">
               <span style={{ fontSize: '16px' }}>✨</span>
@@ -179,12 +230,10 @@ export default function ChatWidget() {
             </button>
           </div>
 
-          {/* Subtitle */}
           <div className="px-5 py-2 bg-indigo-50 border-b border-indigo-100">
             <p className="text-xs text-indigo-600">Powered by Claude — running against your live data</p>
           </div>
 
-          {/* Body */}
           <div className="flex-1 overflow-auto p-4">
             {isPending ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-3">

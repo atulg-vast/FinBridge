@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { companiesApi } from '@/api/companies'
+import { useSetPageHeader } from '@/hooks/useSetPageHeader'
+import { PageActions } from '@/components/PageActions'
 import type { CompanyCreatePayload, CompanyCreateResponse } from '@/api/companies'
 
 const BUSINESS_TYPES = ['Manufacturing', 'IT', 'Services', 'Trading', 'Other']
@@ -42,20 +44,18 @@ export default function CompaniesPage() {
     createMutation.mutate(form)
   }
 
+  useSetPageHeader('Companies', `${companies.length} compan${companies.length !== 1 ? 'ies' : 'y'} registered`)
+
   return (
     <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Companies</h1>
-          <p className="text-gray-500 text-sm mt-1">{companies.length} compan{companies.length !== 1 ? 'ies' : 'y'} registered</p>
-        </div>
+      <PageActions>
         <button
           onClick={() => { setShowModal(true); setError(''); setCreatedCredentials(null) }}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
         >
           + Add Company
         </button>
-      </div>
+      </PageActions>
 
       {createdCredentials && (
         <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-5">

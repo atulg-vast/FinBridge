@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDropzone } from 'react-dropzone'
 import { reportsApi } from '@/api/reports'
 import { companiesApi } from '@/api/companies'
+import { useSetPageHeader } from '@/hooks/useSetPageHeader'
 import { useAuthStore } from '@/stores/authStore'
 
 function FileIcon({ filename }: { filename: string }) {
@@ -76,10 +77,10 @@ export default function ReportsPage() {
     uploadMutation.mutate()
   }
 
+  useSetPageHeader('Reports', 'Upload MIS reports for your companies')
+
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">Reports</h1>
-      <p className="text-gray-500 text-sm mb-8">Upload MIS reports for your companies</p>
 
       {/* Upload form */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8 max-w-2xl">

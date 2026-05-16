@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useSetPageHeader } from '@/hooks/useSetPageHeader'
 import { dashboardApi, type PlatformSummary, type FirmStat } from '@/api/dashboard'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -95,10 +96,10 @@ export default function AdminDashboard() {
     name: f.firm_name.length > 14 ? f.firm_name.slice(0, 13) + '…' : f.firm_name,
   }))
 
+  useSetPageHeader('Platform Overview', 'Real-time health of FinBridge across all firms')
+
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">Platform Overview</h1>
-      <p className="text-gray-500 text-sm mb-8">Real-time health of FinBridge across all firms</p>
 
       {/* Stat cards */}
       <div className="grid grid-cols-3 gap-5 mb-8">

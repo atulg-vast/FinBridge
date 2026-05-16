@@ -5,6 +5,8 @@ import { paymentHeadsApi } from '@/api/paymentHeads'
 import { companiesApi } from '@/api/companies'
 import { useAuthStore } from '@/stores/authStore'
 import type { Transaction } from '@/api/transactions'
+import { useSetPageHeader } from '@/hooks/useSetPageHeader'
+import { PageActions } from '@/components/PageActions'
 
 function ConfidenceBadge({ score }: { score: string | null }) {
   if (!score) return null
@@ -292,24 +294,22 @@ export default function ReviewPage() {
     ? transactions.filter((t) => t.company_id === filterCompany)
     : transactions
 
+  useSetPageHeader('Review Queue', `${transactions.length} transaction${transactions.length !== 1 ? 's' : ''} pending review`)
+
   return (
     <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Review Queue</h1>
-          <p className="text-gray-500 text-sm mt-1">{transactions.length} transaction{transactions.length !== 1 ? 's' : ''} pending review</p>
-        </div>
-        {companies.length > 1 && (
+      {companies.length > 1 && (
+        <PageActions>
           <select
             value={filterCompany}
             onChange={(e) => setFilterCompany(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
           >
             <option value="">All companies</option>
             {companies.map((id) => <option key={id} value={id}>{companyNameMap[id] ?? id.slice(0, 8) + '…'}</option>)}
           </select>
-        )}
-      </div>
+        </PageActions>
+      )}
 
       {isLoading ? (
         <div className="text-gray-400 text-sm">Loading...</div>

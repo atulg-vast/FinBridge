@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useSetPageHeader } from '@/hooks/useSetPageHeader'
 import { Link } from 'react-router-dom'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -96,10 +97,10 @@ export default function AccountantDashboard() {
   const hasMonthlySpend = monthly.some(m => m.amount > 0)
   const hasMyReviews = myReviews.some(m => m.accepted > 0 || m.rejected > 0)
 
+  useSetPageHeader('My Dashboard', 'Your review queue and performance across companies')
+
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">My Dashboard</h1>
-      <p className="text-gray-500 text-sm mb-8">Your review queue and performance across companies</p>
 
       {/* Stat cards */}
       <div className="grid grid-cols-5 gap-4 mb-8">

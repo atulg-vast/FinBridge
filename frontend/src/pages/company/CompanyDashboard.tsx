@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { useSetPageHeader } from '@/hooks/useSetPageHeader'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
@@ -40,10 +41,10 @@ export default function CompanyDashboard() {
     { name: 'Rejected', value: tc.rejected },
   ].filter((d) => d.value > 0)
 
+  useSetPageHeader('Company Dashboard', 'Overview of your financial documents and transactions')
+
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">Company Dashboard</h1>
-      <p className="text-gray-500 text-sm mb-8">Overview of your financial documents and transactions</p>
 
       {/* Document stat cards */}
       <div className="grid grid-cols-4 gap-4 mb-6">

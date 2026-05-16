@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useSetPageHeader } from '@/hooks/useSetPageHeader'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { companiesApi, accountantsApi } from '@/api/companies'
@@ -114,10 +115,10 @@ export default function FirmDashboard() {
     ? Math.round((tc.accepted / totalReviewed) * 100)
     : null
 
+  useSetPageHeader('Firm Overview', 'Company performance and team productivity at a glance')
+
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">Firm Overview</h1>
-      <p className="text-gray-500 text-sm mb-8">Company performance and team productivity at a glance</p>
 
       {/* Stat cards */}
       <div className="grid grid-cols-5 gap-4 mb-8">

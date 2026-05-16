@@ -2,6 +2,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { documentsApi } from '@/api/documents'
 import { transactionsApi } from '@/api/transactions'
+import { useSetPageHeader } from '@/hooks/useSetPageHeader'
+import { PageActions } from '@/components/PageActions'
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -72,25 +74,18 @@ export default function DocumentDetailPage() {
     enabled: !!docId && doc?.status === 'extracted',
   })
 
+  useSetPageHeader(
+    doc?.original_filename ?? 'Document',
+    doc ? `${doc.document_type?.name ?? ''} · ${doc.status}` : undefined,
+    true
+  )
+
   if (docLoading) return <div className="p-8 text-gray-400">Loading...</div>
   if (!doc) return <div className="p-8 text-gray-400">Document not found.</div>
 
   return (
     <div className="p-8">
-      <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate(-1)} className="text-gray-400 hover:text-gray-600 text-sm">← Back</button>
-        <div className="flex-1">
-          <h1 className="text-xl font-bold text-gray-900">{doc.original_filename}</h1>
-          <div className="flex items-center gap-3 mt-1">
-            <span className="text-xs text-gray-400">{doc.document_type?.name}</span>
-            <span className={`text-xs px-2 py-0.5 rounded font-medium ${STATUS_COLORS[doc.status]}`}>
-              {doc.status}
-              {(doc.status === 'pending' || doc.status === 'processing') && (
-                <span className="ml-1 animate-pulse">•</span>
-              )}
-            </span>
-          </div>
-        </div>
+      <PageActions>
         <button
           onClick={() => { if (confirm(`Delete "${doc.original_filename}"?`)) deleteMutation.mutate() }}
           disabled={deleteMutation.isPending}
@@ -98,7 +93,7 @@ export default function DocumentDetailPage() {
         >
           {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
         </button>
-      </div>
+      </PageActions>
 
       {/* Processing state */}
       {(doc.status === 'pending' || doc.status === 'processing') && (

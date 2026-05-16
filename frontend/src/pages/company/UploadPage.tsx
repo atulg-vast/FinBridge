@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { documentsApi, type Document } from '@/api/documents'
+import { useSetPageHeader } from '@/hooks/useSetPageHeader'
 
 const STATUS_COLORS: Record<string, string> = {
   pending:    'bg-yellow-100 text-yellow-700',
@@ -212,10 +213,10 @@ export default function UploadPage() {
     disabled: uploading,
   })
 
+  useSetPageHeader('Upload Documents', 'Upload financial documents for AI-powered extraction')
+
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">Upload Documents</h1>
-      <p className="text-gray-500 text-sm mb-8">Upload financial documents for AI-powered extraction</p>
 
       <div className="max-w-2xl">
 
