@@ -126,7 +126,7 @@ def _accountant_summary(db: Session, user: User):
             "total_docs": total_docs,
         })
 
-    monthly = _monthly_spend(db, company_ids=company_ids, months=6, use_reviewed_at=True)
+    monthly = _monthly_spend(db, company_ids=company_ids, months=6)
 
     # My personal monthly review activity (for accountant role)
     my_monthly_reviews = []
@@ -350,7 +350,7 @@ def get_firm_analytics(
     }
 
 
-def _monthly_spend(db: Session, company_ids: list, months: int = 6, use_reviewed_at: bool = False):
+def _monthly_spend(db: Session, company_ids: list, months: int = 6):
     """Returns list of {month, amount} for accepted transactions over last N months."""
     if not company_ids:
         return []
@@ -366,21 +366,11 @@ def _monthly_spend(db: Session, company_ids: list, months: int = 6, use_reviewed
         else:
             month_end = date(target.year, target.month + 1, 1)
 
-        if use_reviewed_at:
-            date_filter = [
-                Transaction.reviewed_at >= month_start,
-                Transaction.reviewed_at < month_end,
-            ]
-        else:
-            date_filter = [
-                Transaction.transaction_date >= month_start,
-                Transaction.transaction_date < month_end,
-            ]
-
         total = db.query(func.sum(Transaction.amount)).filter(
             Transaction.company_id.in_(company_ids),
             Transaction.status == TransactionStatus.accepted,
-            *date_filter,
+            Transaction.transaction_date >= month_start,
+            Transaction.transaction_date < month_end,
         ).scalar() or 0
 
         results.append({
