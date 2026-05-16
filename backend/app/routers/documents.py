@@ -159,6 +159,10 @@ def delete_document(
     if reviewed:
         raise HTTPException(status_code=400, detail="Cannot delete a document that has been reviewed by an accountant")
 
+    log_action(db, current_user.id, "document_deleted", "document",
+               entity_id=doc.id, company_id=str(doc.company_id),
+               meta={"filename": doc.original_filename, "document_type": str(doc.document_type_id)})
+
     # Delete file from disk
     if doc.file_path and os.path.exists(doc.file_path):
         os.remove(doc.file_path)
@@ -178,6 +182,10 @@ async def retry_extraction(
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     _check_company_access(str(doc.company_id), current_user)
+
+    log_action(db, current_user.id, "document_retry", "document",
+               entity_id=doc.id, company_id=str(doc.company_id),
+               meta={"filename": doc.original_filename})
 
     # Delete existing transactions so we start fresh
     from app.models.transaction import Transaction

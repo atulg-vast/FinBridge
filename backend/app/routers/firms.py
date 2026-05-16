@@ -9,6 +9,7 @@ from app.models.firm import AccountingFirm
 from app.schemas.firm import FirmCreate, FirmResponse, FirmCreateResponse
 from app.schemas.user import UserResponse
 from app.services.auth_service import hash_password
+from app.services.audit_service import log_action
 from typing import List
 
 router = APIRouter()
@@ -57,6 +58,9 @@ def create_firm(
         role=UserRole.firm_admin,
     )
     db.add(admin)
+    log_action(db, admin.id, "firm_created", "firm",
+               entity_id=firm.id,
+               meta={"firm_name": firm.name, "admin_email": payload.admin_email})
     db.commit()
     db.refresh(firm)
 

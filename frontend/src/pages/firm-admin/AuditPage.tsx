@@ -5,19 +5,46 @@ import { auditApi, type AuditFilters } from '@/api/audit'
 import { companiesApi } from '@/api/companies'
 
 const ACTION_LABELS: Record<string, string> = {
+  // Documents
   document_uploaded: 'Document Uploaded',
   document_extracted: 'AI Extraction Complete',
+  document_deleted: 'Document Deleted',
+  document_retry: 'Extraction Retried',
+  // Transactions
   transaction_accepted: 'Transaction Accepted',
   transaction_rejected: 'Transaction Rejected',
+  // Reports
   report_uploaded: 'Report Uploaded',
+  report_deleted: 'Report Deleted',
+  // Firm & Company setup
+  firm_created: 'Firm Created',
+  company_created: 'Company Created',
+  accountant_added: 'Accountant Added',
+  // Payment heads
+  payment_head_created: 'Payment Head Created',
+  payment_head_deleted: 'Payment Head Deleted',
+  payment_sub_head_created: 'Sub-Head Created',
+  payment_sub_head_deleted: 'Sub-Head Deleted',
+  payment_heads_preset_applied: 'Preset Applied',
 }
 
 const ACTION_COLORS: Record<string, string> = {
   document_uploaded: 'bg-blue-100 text-blue-700',
   document_extracted: 'bg-purple-100 text-purple-700',
+  document_deleted: 'bg-red-100 text-red-600',
+  document_retry: 'bg-amber-100 text-amber-700',
   transaction_accepted: 'bg-green-100 text-green-700',
   transaction_rejected: 'bg-red-100 text-red-700',
   report_uploaded: 'bg-indigo-100 text-indigo-700',
+  report_deleted: 'bg-red-100 text-red-600',
+  firm_created: 'bg-slate-100 text-slate-700',
+  company_created: 'bg-teal-100 text-teal-700',
+  accountant_added: 'bg-cyan-100 text-cyan-700',
+  payment_head_created: 'bg-orange-100 text-orange-700',
+  payment_head_deleted: 'bg-red-100 text-red-600',
+  payment_sub_head_created: 'bg-orange-50 text-orange-600',
+  payment_sub_head_deleted: 'bg-red-50 text-red-500',
+  payment_heads_preset_applied: 'bg-yellow-100 text-yellow-700',
 }
 
 function timeStr(iso: string) {
@@ -87,6 +114,10 @@ export default function AuditPage() {
           <option value="document">Document</option>
           <option value="transaction">Transaction</option>
           <option value="report">Report</option>
+          <option value="firm">Firm</option>
+          <option value="company">Company</option>
+          <option value="user">User</option>
+          <option value="payment_head">Payment Head</option>
         </select>
 
         <input

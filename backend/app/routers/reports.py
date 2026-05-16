@@ -160,6 +160,9 @@ def delete_report(
         raise HTTPException(status_code=404, detail="Report not found")
     _check_access(str(report.company_id), current_user, db)
 
+    log_action(db, current_user.id, "report_deleted", "report",
+               entity_id=report.id, company_id=str(report.company_id),
+               meta={"title": report.title, "filename": report.original_filename})
     if os.path.exists(report.file_path):
         os.remove(report.file_path)
     db.delete(report)

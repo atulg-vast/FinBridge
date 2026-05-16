@@ -14,6 +14,7 @@ from app.schemas.company import (
 )
 from app.schemas.user import UserResponse
 from app.services.auth_service import hash_password
+from app.services.audit_service import log_action
 
 router = APIRouter()
 
@@ -76,6 +77,9 @@ def create_company(
         role=UserRole.company_admin,
     )
     db.add(admin)
+    log_action(db, current_user.id, "company_created", "company",
+               entity_id=company.id, company_id=str(company.id),
+               meta={"company_name": company.name, "business_type": payload.business_type, "admin_email": payload.admin_email})
     db.commit()
     db.refresh(company)
 
@@ -129,6 +133,9 @@ def create_accountant(
         role=UserRole.accountant,
     )
     db.add(accountant)
+    log_action(db, current_user.id, "accountant_added", "user",
+               entity_id=accountant.id,
+               meta={"email": payload.email, "full_name": payload.full_name})
     db.commit()
     db.refresh(accountant)
 

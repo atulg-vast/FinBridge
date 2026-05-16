@@ -7,6 +7,7 @@ from app.models.user import User, UserRole
 from app.models.company import Company
 from app.models.payment import PaymentHead, PaymentSubHead
 from app.schemas.payment import HeadCreate, HeadResponse, SubHeadCreate, SubHeadResponse
+from app.services.audit_service import log_action
 
 router = APIRouter()
 
@@ -92,6 +93,9 @@ def create_head(
     _check_company_access(company_id, current_user, db)
     head = PaymentHead(company_id=company_id, name=payload.name.strip())
     db.add(head)
+    log_action(db, current_user.id, "payment_head_created", "payment_head",
+               entity_id=head.id, company_id=company_id,
+               meta={"name": payload.name.strip()})
     db.commit()
     db.refresh(head)
     return head
@@ -110,6 +114,9 @@ def delete_head(
     ).first()
     if not head:
         raise HTTPException(status_code=404, detail="Payment head not found")
+    log_action(db, current_user.id, "payment_head_deleted", "payment_head",
+               entity_id=head.id, company_id=company_id,
+               meta={"name": head.name})
     db.delete(head)
     db.commit()
 
@@ -146,6 +153,9 @@ def create_sub_head(
         raise HTTPException(status_code=404, detail="Payment head not found")
     sub = PaymentSubHead(company_id=company_id, head_id=head_id, name=payload.name.strip())
     db.add(sub)
+    log_action(db, current_user.id, "payment_sub_head_created", "payment_head",
+               entity_id=sub.id, company_id=company_id,
+               meta={"name": payload.name.strip(), "head_name": head.name})
     db.commit()
     db.refresh(sub)
     return sub
@@ -167,6 +177,9 @@ def delete_sub_head(
     ).first()
     if not sub:
         raise HTTPException(status_code=404, detail="Sub-head not found")
+    log_action(db, current_user.id, "payment_sub_head_deleted", "payment_head",
+               entity_id=sub.id, company_id=company_id,
+               meta={"name": sub.name})
     db.delete(sub)
     db.commit()
 
@@ -192,5 +205,8 @@ def apply_preset(
         for sub_name in sub_names:
             db.add(PaymentSubHead(company_id=company_id, head_id=head.id, name=sub_name))
         created += 1
+    log_action(db, current_user.id, "payment_heads_preset_applied", "payment_head",
+               company_id=company_id,
+               meta={"business_type": str(company.business_type), "heads_created": created})
     db.commit()
     return {"message": f"Applied preset: {created} heads created", "business_type": str(company.business_type)}
