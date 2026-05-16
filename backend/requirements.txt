@@ -5,12 +5,13 @@ alembic==1.14.0
 psycopg2-binary==2.9.10
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
 python-multipart==0.0.18
 python-dotenv==1.0.1
 anthropic==0.40.0
 pdf2image==1.17.0
 Pillow==11.0.0
-pydantic==2.10.3
+pydantic[email]==2.10.3
 pydantic-settings==2.6.1
 sse-starlette==2.1.3
 aiofiles==24.1.0
