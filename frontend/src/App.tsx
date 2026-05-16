@@ -19,6 +19,7 @@ import AccountantDashboard from '@/pages/accountant/AccountantDashboard'
 import ReviewPage from '@/pages/accountant/ReviewPage'
 import AccountantReportsPage from '@/pages/accountant/ReportsPage'
 import CompanyReportsPage from '@/pages/company/ReportsPage'
+import TeamPage from '@/pages/company/TeamPage'
 import AuditPage from '@/pages/firm-admin/AuditPage'
 
 const queryClient = new QueryClient({
@@ -62,6 +63,7 @@ export default function App() {
             <Route path="upload" element={<UploadPage />} />
             <Route path="documents/:docId" element={<DocumentDetailPage />} />
             <Route path="reports" element={<CompanyReportsPage />} />
+            <Route path="team" element={<TeamPage />} />
           </Route>
 
           <Route path="/accountant" element={

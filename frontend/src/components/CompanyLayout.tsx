@@ -4,14 +4,15 @@ import { useNotifications } from '@/hooks/useNotifications'
 import NotificationBell from '@/components/NotificationBell'
 import ChatWidget from '@/components/ChatWidget'
 
-const nav = [
-  { to: '/company', label: 'Dashboard', end: true },
-  { to: '/company/upload', label: 'Upload Documents' },
-  { to: '/company/reports', label: 'Reports' },
-]
-
 export default function CompanyLayout() {
   const { user, logout } = useAuthStore()
+
+  const nav = [
+    { to: '/company', label: 'Dashboard', end: true },
+    { to: '/company/upload', label: 'Upload Documents' },
+    { to: '/company/reports', label: 'Reports' },
+    ...(user?.role === 'company_admin' ? [{ to: '/company/team', label: 'Team', end: false }] : []),
+  ]
   const navigate = useNavigate()
   useNotifications()
 

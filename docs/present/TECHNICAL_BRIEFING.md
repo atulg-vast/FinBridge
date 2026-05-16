@@ -41,8 +41,14 @@ FinBridge is a multi-tenant SaaS platform that replaces this entire workflow:
 | **Platform Admin** | `/admin` | Onboards accounting firms, global platform oversight |
 | **Firm Admin** | `/firm` | Manages companies & accountants under their firm, views full audit trail |
 | **Accountant** | `/accountant` | Reviews AI-extracted transactions, accepts/rejects, uploads MIS reports |
-| **Company Admin** | `/company` | Uploads financial documents, views transaction status, downloads reports |
-| **Company User** | `/company` | Same as company admin within their company |
+| **Company Admin** | `/company` | Uploads financial documents, views transaction status, downloads reports, **manages team** |
+| **Company User** | `/company` | Uploads documents, views transaction status, downloads reports |
+
+**Who creates whom:**
+- Platform Admin creates Firm Admin (via `/admin`)
+- Firm Admin creates Companies + Accountants (via `/firm`)
+- **Company Admin creates Company Users (via `/company/team`)** — self-service team management
+- Company Users cannot create anyone
 
 **Critical rule:** Accountants see data for ALL companies under their firm. Company users see ONLY their own company's data. This isolation is enforced server-side — the client cannot override it.
 
@@ -244,6 +250,7 @@ log_action(db, user_id, action, entity_type, entity_id, company_id, meta={...})
 | `firm_created` | `firm` | `firms.py → create_firm` | `firm_name`, `admin_email` |
 | `company_created` | `company` | `companies.py → create_company` | `company_name`, `business_type`, `admin_email` |
 | `accountant_added` | `user` | `companies.py → create_accountant` | `email`, `full_name` |
+| `company_user_added` | `user` | `company_users.py → create_company_user` | `email`, `full_name` |
 | `document_uploaded` | `document` | `documents.py → upload_document` | `filename`, `document_type` |
 | `document_extracted` | `document` | `ai_extraction.py` | `transactions_created`, `confidence_score` |
 | `document_deleted` | `document` | `documents.py → delete_document` | `filename`, `document_type_id` |
@@ -290,13 +297,47 @@ log_action(db, user_id, action, entity_type, entity_id, company_id, meta={...})
 |---|---|
 | Pending > ₹1 Lakh | `WHERE status='pending_review' AND amount >= 100000 ORDER BY amount DESC` |
 | Spend by Expense Head | `SUM(amount) GROUP BY payment_head.name WHERE status='accepted'` |
-| Top Vendors | `SUM(amount) GROUP BY party_name WHERE status='accepted' LIMIT 10` |
+| Top Vendors | `SUM(amount) GROUP BY party_name WHERE status='accepted' LIMIT 10 per group` |
 | Low Confidence | `WHERE confidence_score < 0.8 AND status='pending_review'` |
 | Rejected + Reasons | `WHERE status='rejected' ORDER BY reviewed_at DESC` |
 | Monthly Trend | 6-month loop of `SUM(amount) WHERE status='accepted'` |
 | All Pending | `WHERE status='pending_review' ORDER BY amount DESC` |
 
 **Claude's exact role in this feature:** Reads the serialized row data and writes a plain-English business summary. It does NOT write SQL. It does NOT decide what data to show.
+
+**Role-aware data segregation:**
+
+The panel automatically scopes and groups results based on the logged-in user's role:
+
+| Role | Scope | Group Column Added | Data shown |
+|---|---|---|---|
+| Company Admin / Company User | `single` | None | Only that company's data |
+| Accountant / Firm Admin | `firm` | **Company** column | Per-company breakdown within their firm |
+| Platform Admin | `platform` | **Firm** column | Firm-level aggregated data across all firms |
+
+For firm scope, each query result row includes a `Company` column so accountants can compare Acme Corp vs TechStart side by side.
+
+For platform scope, each query result row includes a `Firm` column. Multiple companies under the same firm are aggregated together (spend summed, vendors merged) so the platform admin sees firm-level patterns, not company-level noise.
+
+**How the segregation is implemented (`backend/app/routers/chat.py`):**
+```python
+# In run_query():
+if current_user.role in (company_admin, company_user):
+    companies = [current company]
+    scope = "single"
+elif current_user.role in (accountant, firm_admin):
+    companies = [all companies in their firm]
+    scope = "firm"
+    label_map = {str(c.id): c.name for c in companies}      # company_id → company name
+else:  # platform_admin
+    companies = [all companies on platform]
+    scope = "platform"
+    label_map = {str(c.id): firm_name for c in companies}    # company_id → firm name
+
+# _group_col(scope) → "Company" if firm, "Firm" if platform, None if single
+# Every query prepends this column to results when gc is not None
+# For platform scope, _aggregate_rows() sums amounts across companies in same firm
+```
 
 ---
 
@@ -391,6 +432,11 @@ GET    /notifications/stream?token=...     → SSE stream
 POST   /notifications/{id}/read            → mark read
 
 GET    /audit-logs                          → audit trail (firm_admin only)
+
+GET    /companies/users                     → list company users (company_admin)
+POST   /companies/users                     → create company user (company_admin)
+PUT    /companies/users/{id}               → update company user name (company_admin)
+DELETE /companies/users/{id}               → remove company user (company_admin)
 
 GET    /chat/queries                        → 7 query cards
 POST   /chat/run                            → run query + Claude explanation

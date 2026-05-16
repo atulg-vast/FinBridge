@@ -57,3 +57,40 @@ export const accountantsApi = {
   create: (firmId: string, payload: AccountantCreatePayload) =>
     apiClient.post<AccountantCreateResponse>(`/firms/${firmId}/accountants`, payload).then((r) => r.data),
 }
+
+export interface CompanyUser {
+  id: string
+  email: string
+  full_name: string
+  role: string
+  created_at: string
+}
+
+export interface CompanyUserCreatePayload {
+  full_name: string
+  email: string
+}
+
+export interface CompanyUserCreateResponse {
+  id: string
+  email: string
+  full_name: string
+  role: string
+  temp_password: string
+  message: string
+}
+
+export interface CompanyUserUpdatePayload {
+  full_name: string
+}
+
+export const companyUsersApi = {
+  list: () =>
+    apiClient.get<CompanyUser[]>('/companies/users').then((r) => r.data),
+  create: (payload: CompanyUserCreatePayload) =>
+    apiClient.post<CompanyUserCreateResponse>('/companies/users', payload).then((r) => r.data),
+  update: (userId: string, payload: CompanyUserUpdatePayload) =>
+    apiClient.put<CompanyUser>(`/companies/users/${userId}`, payload).then((r) => r.data),
+  remove: (userId: string) =>
+    apiClient.delete(`/companies/users/${userId}`),
+}

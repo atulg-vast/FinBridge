@@ -24,11 +24,12 @@ app.add_middleware(
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
-from app.routers import auth, firms, companies, payment_heads, users, documents, transactions, reports, dashboard, notifications, audit, chat
+from app.routers import auth, firms, companies, company_users, payment_heads, users, documents, transactions, reports, dashboard, notifications, audit, chat
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(firms.router, prefix="/firms", tags=["firms"])
 app.include_router(companies.router, prefix="/firms", tags=["companies"])
+app.include_router(company_users.router, prefix="/companies", tags=["company-users"])
 app.include_router(payment_heads.router, prefix="/companies", tags=["payment-heads"])
 app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(documents.router, prefix="/documents", tags=["documents"])

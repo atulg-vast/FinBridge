@@ -41,3 +41,21 @@ class AccountantCreateResponse(BaseModel):
     role: str
     temp_password: str
     message: str
+
+
+class CompanyUserCreate(BaseModel):
+    full_name: str
+    email: EmailStr
+
+
+class CompanyUserUpdate(BaseModel):
+    full_name: str
+
+
+class CompanyUserCreateResponse(BaseModel):
+    id: uuid.UUID
+    email: str
+    full_name: str
+    role: str
+    temp_password: str
+    message: str
