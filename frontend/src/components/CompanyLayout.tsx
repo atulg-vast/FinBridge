@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { useNotifications } from '@/hooks/useNotifications'
 import NotificationBell from '@/components/NotificationBell'
+import ChatWidget from '@/components/ChatWidget'
 
 const nav = [
   { to: '/company', label: 'Dashboard', end: true },
@@ -57,6 +58,7 @@ export default function CompanyLayout() {
           <Outlet />
         </div>
       </main>
+      <ChatWidget />
     </div>
   )
 }

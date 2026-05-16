@@ -24,7 +24,7 @@ app.add_middleware(
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
-from app.routers import auth, firms, companies, payment_heads, users, documents, transactions, reports, dashboard, notifications, audit
+from app.routers import auth, firms, companies, payment_heads, users, documents, transactions, reports, dashboard, notifications, audit, chat
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(firms.router, prefix="/firms", tags=["firms"])
@@ -37,6 +37,7 @@ app.include_router(reports.router, prefix="/reports", tags=["reports"])
 app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 app.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
 app.include_router(audit.router, prefix="/audit-logs", tags=["audit"])
+app.include_router(chat.router, prefix="/chat", tags=["chat"])
 
 
 @app.get("/health")
