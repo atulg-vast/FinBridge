@@ -92,19 +92,6 @@ Open http://localhost:5173
 
 ---
 
-## Demo Credentials
-
-| Role | Email | Password |
-|------|-------|----------|
-| Platform Admin | admin@finbridge.com | Admin@123 |
-| Firm Admin | firm@apexaccounting.com | Firm@1234 |
-| Accountant | accountant1@apex.com | Acc@1234 |
-| TechCorp Admin | admin@techcorp.com | Tech@1234 |
-| TechCorp User | user@techcorp.com | Tech@1234 |
-| ManuFab Admin | admin@manufab.com | Manu@1234 |
-
----
-
 ## Demo Flow
 
 1. **Login as `admin@techcorp.com`** → Upload a PDF invoice or bank statement
