@@ -6,16 +6,16 @@ AI-powered financial document management platform for accounting firms. Replaces
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 18 + Vite + TypeScript + Tailwind CSS |
-| State | React Query + Zustand |
-| Backend | Python 3.12 + FastAPI |
-| Database | PostgreSQL 16 + SQLAlchemy 2.0 + Alembic |
-| AI | Anthropic Claude claude-sonnet-4-6 (vision + tool_use) |
-| Auth | JWT (python-jose) + bcrypt |
-| Real-time | Server-Sent Events (SSE) |
-| PWA | vite-plugin-pwa + Workbox |
+| Layer     | Technology                                             |
+| --------- | ------------------------------------------------------ |
+| Frontend  | React 18 + Vite + TypeScript + Tailwind CSS            |
+| State     | React Query + Zustand                                  |
+| Backend   | Python 3.12 + FastAPI                                  |
+| Database  | PostgreSQL 16 + SQLAlchemy 2.0 + Alembic               |
+| AI        | Anthropic Claude claude-sonnet-4-6 (vision + tool_use) |
+| Auth      | JWT (python-jose) + bcrypt                             |
+| Real-time | Server-Sent Events (SSE)                               |
+| PWA       | vite-plugin-pwa + Workbox                              |
 
 ---
 
@@ -94,12 +94,12 @@ Open http://localhost:5173
 
 ## Demo Flow
 
-1. **Login as `admin@techcorp.com`** → Upload a PDF invoice or bank statement
+1. **Login as `Company Admin`** → Upload a PDF invoice or bank statement
 2. Watch status change from `pending` → `processing` → `extracted` in real time
-3. **Login as `accountant1@apex.com`** → Go to Review Queue → see AI-extracted fields
+3. **Login as `Accountant`** → Go to Review Queue → see AI-extracted fields
 4. Edit any field, assign a payment head, click Accept
-5. **Switch back to TechCorp Admin** → Bell notification appears, transaction shows as Accepted
-6. **Login as `firm@apexaccounting.com`** → Audit Trail shows every action with metadata
+5. **Switch back to Company Admin** → Bell notification appears, transaction shows as Accepted
+6. **Login as `Firm Admin`** → Audit Trail shows every action with metadata
 7. **Accountant** → Upload an MIS report → Company admin can download it
 
 ---
