@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { transactionsApi } from '@/api/transactions'
 import { paymentHeadsApi } from '@/api/paymentHeads'
+import { companiesApi } from '@/api/companies'
+import { useAuthStore } from '@/stores/authStore'
 import type { Transaction } from '@/api/transactions'
 
 function ConfidenceBadge({ score }: { score: string | null }) {
@@ -268,10 +270,21 @@ export default function ReviewPage() {
   const [selected, setSelected] = useState<Transaction | null>(null)
   const [filterCompany, setFilterCompany] = useState('')
 
+  const { user } = useAuthStore()
+  const firmId = user?.firm_id ?? ''
+
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ['transactions', { status: 'pending_review' }],
     queryFn: () => transactionsApi.list({ status: 'pending_review' }),
   })
+
+  const { data: companiesList = [] } = useQuery({
+    queryKey: ['companies', firmId],
+    queryFn: () => companiesApi.list(firmId),
+    enabled: !!firmId,
+  })
+
+  const companyNameMap = Object.fromEntries(companiesList.map((c) => [c.id, c.name]))
 
   const companies = Array.from(new Set(transactions.map((t) => t.company_id)))
 
@@ -293,7 +306,7 @@ export default function ReviewPage() {
             className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="">All companies</option>
-            {companies.map((id) => <option key={id} value={id}>{id.slice(0, 8)}…</option>)}
+            {companies.map((id) => <option key={id} value={id}>{companyNameMap[id] ?? id.slice(0, 8) + '…'}</option>)}
           </select>
         )}
       </div>

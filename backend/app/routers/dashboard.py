@@ -75,11 +75,13 @@ def _accountant_summary(db: Session, user: User):
 
     accepted_count = db.query(Transaction).filter(
         Transaction.company_id.in_(company_ids),
+        Transaction.reviewed_by == user.id,
         Transaction.status == TransactionStatus.accepted,
     ).count()
 
     rejected_count = db.query(Transaction).filter(
         Transaction.company_id.in_(company_ids),
+        Transaction.reviewed_by == user.id,
         Transaction.status == TransactionStatus.rejected,
     ).count()
 
@@ -103,16 +105,56 @@ def _accountant_summary(db: Session, user: User):
             Transaction.company_id == c.id,
             Transaction.status == TransactionStatus.pending_review,
         ).count()
+        accepted = db.query(Transaction).filter(
+            Transaction.company_id == c.id,
+            Transaction.reviewed_by == user.id,
+            Transaction.status == TransactionStatus.accepted,
+        ).count()
+        rejected = db.query(Transaction).filter(
+            Transaction.company_id == c.id,
+            Transaction.reviewed_by == user.id,
+            Transaction.status == TransactionStatus.rejected,
+        ).count()
         total_docs = db.query(Document).filter(Document.company_id == c.id).count()
         company_stats.append({
             "id": str(c.id),
             "name": c.name,
             "business_type": c.business_type.value,
             "pending_review": pending,
+            "accepted": accepted,
+            "rejected": rejected,
             "total_docs": total_docs,
         })
 
-    monthly = _monthly_spend(db, company_ids=company_ids, months=6)
+    monthly = _monthly_spend(db, company_ids=company_ids, months=6, use_reviewed_at=True)
+
+    # My personal monthly review activity (for accountant role)
+    my_monthly_reviews = []
+    today = date.today()
+    for i in range(5, -1, -1):
+        target = date(today.year, today.month, 1) - timedelta(days=i * 30)
+        month_start = date(target.year, target.month, 1)
+        month_end = (
+            date(target.year + 1, 1, 1) if target.month == 12
+            else date(target.year, target.month + 1, 1)
+        )
+        acc = db.query(Transaction).filter(
+            Transaction.reviewed_by == user.id,
+            Transaction.status == TransactionStatus.accepted,
+            Transaction.reviewed_at >= month_start,
+            Transaction.reviewed_at < month_end,
+        ).count()
+        rej = db.query(Transaction).filter(
+            Transaction.reviewed_by == user.id,
+            Transaction.status == TransactionStatus.rejected,
+            Transaction.reviewed_at >= month_start,
+            Transaction.reviewed_at < month_end,
+        ).count()
+        my_monthly_reviews.append({
+            "month": month_start.strftime("%b %Y"),
+            "accepted": acc,
+            "rejected": rej,
+        })
 
     return {
         "role": "accountant",
@@ -125,6 +167,7 @@ def _accountant_summary(db: Session, user: User):
         "reports_count": reports_count,
         "company_stats": company_stats,
         "monthly_spend": monthly,
+        "my_monthly_reviews": my_monthly_reviews,
     }
 
 
@@ -132,7 +175,7 @@ def _platform_summary(db: Session):
     from app.models.firm import AccountingFirm
     firms = db.query(AccountingFirm).count()
     companies = db.query(Company).count()
-    users = db.query(User).count()
+    users = db.query(User).filter(User.role != UserRole.platform_admin).count()
     docs = db.query(Document).count()
     txns = db.query(Transaction).count()
     pending = db.query(Transaction).filter(Transaction.status == TransactionStatus.pending_review).count()
@@ -148,7 +191,166 @@ def _platform_summary(db: Session):
     }
 
 
-def _monthly_spend(db: Session, company_ids: list, months: int = 6):
+@router.get("/platform/firm-analytics")
+def get_firm_analytics(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    from app.models.firm import AccountingFirm
+
+    if current_user.role != UserRole.platform_admin:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="Platform admin only")
+
+    firms = db.query(AccountingFirm).order_by(AccountingFirm.created_at).all()
+    all_company_ids = [str(c.id) for c in db.query(Company).all()]
+
+    firm_stats = []
+    for firm in firms:
+        companies = db.query(Company).filter(Company.firm_id == firm.id).all()
+        company_ids = [str(c.id) for c in companies]
+
+        users_count = db.query(User).filter(
+            User.firm_id == firm.id,
+            User.role != UserRole.platform_admin,
+        ).count()
+
+        pending = db.query(Transaction).filter(
+            Transaction.company_id.in_(company_ids),
+            Transaction.status == TransactionStatus.pending_review,
+        ).count() if company_ids else 0
+
+        accepted = db.query(Transaction).filter(
+            Transaction.company_id.in_(company_ids),
+            Transaction.status == TransactionStatus.accepted,
+        ).count() if company_ids else 0
+
+        rejected = db.query(Transaction).filter(
+            Transaction.company_id.in_(company_ids),
+            Transaction.status == TransactionStatus.rejected,
+        ).count() if company_ids else 0
+
+        docs_count = db.query(Document).filter(
+            Document.company_id.in_(company_ids),
+        ).count() if company_ids else 0
+
+        firm_stats.append({
+            "firm_id": str(firm.id),
+            "firm_name": firm.name,
+            "companies": len(companies),
+            "users": users_count,
+            "documents": docs_count,
+            "pending_review": pending,
+            "accepted": accepted,
+            "rejected": rejected,
+        })
+
+    # Platform-wide transaction status totals
+    txn_status = {
+        "pending_review": db.query(Transaction).filter(
+            Transaction.status == TransactionStatus.pending_review).count(),
+        "accepted": db.query(Transaction).filter(
+            Transaction.status == TransactionStatus.accepted).count(),
+        "rejected": db.query(Transaction).filter(
+            Transaction.status == TransactionStatus.rejected).count(),
+    }
+
+    # Monthly document uploads (last 6 months, platform-wide)
+    today = date.today()
+    monthly_docs = []
+    for i in range(5, -1, -1):
+        target = date(today.year, today.month, 1) - timedelta(days=i * 30)
+        month_start = date(target.year, target.month, 1)
+        month_end = (
+            date(target.year + 1, 1, 1) if target.month == 12
+            else date(target.year, target.month + 1, 1)
+        )
+        count = db.query(Document).filter(
+            Document.created_at >= month_start,
+            Document.created_at < month_end,
+        ).count()
+        monthly_docs.append({"month": month_start.strftime("%b %Y"), "count": count})
+
+    return {
+        "firm_stats": firm_stats,
+        "txn_status": txn_status,
+        "monthly_docs": monthly_docs,
+    }
+
+
+@router.get("/firm/analytics")
+def get_firm_analytics(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    from fastapi import HTTPException
+    if current_user.role not in (UserRole.firm_admin, UserRole.accountant):
+        raise HTTPException(status_code=403, detail="Firm members only")
+
+    # All accountants + firm_admins in this firm
+    reviewers = db.query(User).filter(
+        User.firm_id == current_user.firm_id,
+        User.role.in_([UserRole.accountant, UserRole.firm_admin]),
+    ).all()
+
+    accountant_stats = []
+    for acc in reviewers:
+        accepted = db.query(Transaction).filter(
+            Transaction.reviewed_by == acc.id,
+            Transaction.status == TransactionStatus.accepted,
+        ).count()
+        rejected = db.query(Transaction).filter(
+            Transaction.reviewed_by == acc.id,
+            Transaction.status == TransactionStatus.rejected,
+        ).count()
+        total = accepted + rejected
+        accountant_stats.append({
+            "accountant_id": str(acc.id),
+            "name": acc.full_name or acc.email,
+            "role": acc.role.value,
+            "accepted": accepted,
+            "rejected": rejected,
+            "total_reviewed": total,
+            "acceptance_rate": round(accepted / total * 100, 1) if total > 0 else None,
+        })
+    accountant_stats.sort(key=lambda x: -(x["total_reviewed"]))
+
+    # Monthly firm-wide review throughput (last 6 months)
+    today = date.today()
+    reviewer_ids = [acc.id for acc in reviewers]
+    monthly_reviews = []
+    for i in range(5, -1, -1):
+        target = date(today.year, today.month, 1) - timedelta(days=i * 30)
+        month_start = date(target.year, target.month, 1)
+        month_end = (
+            date(target.year + 1, 1, 1) if target.month == 12
+            else date(target.year, target.month + 1, 1)
+        )
+        acc_count = db.query(Transaction).filter(
+            Transaction.reviewed_by.in_(reviewer_ids),
+            Transaction.status == TransactionStatus.accepted,
+            Transaction.reviewed_at >= month_start,
+            Transaction.reviewed_at < month_end,
+        ).count() if reviewer_ids else 0
+        rej_count = db.query(Transaction).filter(
+            Transaction.reviewed_by.in_(reviewer_ids),
+            Transaction.status == TransactionStatus.rejected,
+            Transaction.reviewed_at >= month_start,
+            Transaction.reviewed_at < month_end,
+        ).count() if reviewer_ids else 0
+        monthly_reviews.append({
+            "month": month_start.strftime("%b %Y"),
+            "accepted": acc_count,
+            "rejected": rej_count,
+        })
+
+    return {
+        "accountant_stats": accountant_stats,
+        "monthly_reviews": monthly_reviews,
+    }
+
+
+def _monthly_spend(db: Session, company_ids: list, months: int = 6, use_reviewed_at: bool = False):
     """Returns list of {month, amount} for accepted transactions over last N months."""
     if not company_ids:
         return []
@@ -164,11 +366,21 @@ def _monthly_spend(db: Session, company_ids: list, months: int = 6):
         else:
             month_end = date(target.year, target.month + 1, 1)
 
+        if use_reviewed_at:
+            date_filter = [
+                Transaction.reviewed_at >= month_start,
+                Transaction.reviewed_at < month_end,
+            ]
+        else:
+            date_filter = [
+                Transaction.transaction_date >= month_start,
+                Transaction.transaction_date < month_end,
+            ]
+
         total = db.query(func.sum(Transaction.amount)).filter(
             Transaction.company_id.in_(company_ids),
             Transaction.status == TransactionStatus.accepted,
-            Transaction.transaction_date >= month_start,
-            Transaction.transaction_date < month_end,
+            *date_filter,
         ).scalar() or 0
 
         results.append({

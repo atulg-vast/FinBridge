@@ -482,6 +482,49 @@ The architecture was designed with scaling in mind. File storage is abstracted b
 
 ---
 
+**Q: "What do the dashboards show at each role level?"**
+
+**Platform Admin** — `GET /dashboard/summary` (stat cards) + `GET /dashboard/platform/firm-analytics` (charts):
+- 6 stat cards: firms, companies, users, documents, transactions, pending review
+- Firms — Companies & Users (grouped bar per firm)
+- Transaction Status platform-wide (donut: accepted/pending/rejected)
+- Firms — Pending vs Accepted (grouped bar showing review backlog per firm)
+- Document Uploads — Last 6 Months (area chart, platform-wide volume trend)
+
+**Firm Admin** — `GET /dashboard/summary` (stat cards + company_stats) + `GET /dashboard/firm/analytics` (accountant performance):
+- 5 stat cards: companies, accountants, pending review, accepted (with firm acceptance rate %), rejected
+- Company Transaction Status — grouped bar (accepted/pending/rejected per company)
+- Accountant Review Performance — grouped bar (accepted/rejected per accountant, tooltip shows acceptance rate %)
+- Monthly Review Activity — area chart of firm-wide accepted + rejected reviews over 6 months
+- Company Acceptance Rate — color-coded horizontal progress bars (green ≥80%, amber ≥50%, red <50%) — tells firm admin which companies submit clean vs messy data
+- Document Volume by Company — bar chart with distinct colors per company
+
+**Accountant** — `GET /dashboard/summary` only (all data included):
+- 5 stat cards: pending review, accepted (with personal acceptance rate %), rejected, docs this week, reports uploaded
+- Companies — Transaction Status — full accepted/pending/rejected breakdown per company (not just pending like before)
+- My Review Activity — area chart of my personally accepted + rejected transactions per month (from `reviewed_by == current_user.id`)
+- Monthly Spend Trend — accepted spend across all my companies
+- Acceptance Rate by Company — same color-coded bars, helps accountant see which company needs guidance
+- Quick Actions panel — direct links to review queue (shows count) and report upload
+
+The `GET /dashboard/firm/analytics` endpoint is accessible by both firm_admin and accountant roles. It queries `Transaction.reviewed_by` to attribute reviews to specific team members. `my_monthly_reviews` in the accountant summary is computed per-accountant using `reviewed_by == user.id` filtered by month.
+
+---
+
+**Q: "What does the Platform Admin dashboard show?"**
+
+The platform admin dashboard calls two endpoints:
+- `GET /dashboard/summary` → 6 stat cards: Accounting Firms, Total Companies, Total Users (excluding platform admin), Documents Uploaded, Total Transactions, Pending Review
+- `GET /dashboard/platform/firm-analytics` → 4 Recharts charts:
+  1. **Firms — Companies & Users** (grouped bar): per-firm company count and user count side by side
+  2. **Transaction Status** (donut): platform-wide accepted vs pending vs rejected with percentage labels
+  3. **Firms — Pending vs Accepted** (grouped bar): per-firm accepted/pending/rejected transaction breakdown — shows which firm has the most review backlog
+  4. **Document Uploads — Last 6 Months** (area chart): platform-wide monthly upload volume trend
+
+The firm analytics endpoint is platform_admin–only (403 for all other roles). It iterates every firm, queries per-firm company/user/document/transaction counts in a loop, and also returns platform-wide monthly document counts for the trend chart.
+
+---
+
 **Q: "Why pre-built queries for the AI panel instead of letting users type questions?"**
 
 Because financial data queries need to be exact. If Claude generates SQL from natural language, it might join the wrong tables, miss a filter, or aggregate incorrectly — and in accounting, wrong numbers have real consequences. Pre-built queries are tested and correct. Claude's role is only to explain the results in plain English — it never touches the query logic. This is also how production financial tools work: QuickBooks has a report menu, not a chat box. Our approach gives the UX of AI (natural language answers) with the reliability of hardcoded queries.
